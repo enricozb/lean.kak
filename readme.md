@@ -8,7 +8,7 @@ A bare-bones kakoune plugin for the Lean Theorem Prover files.
 (\forall x, p x \land q x)
 ```
 will become
-````lean
+```lean
 (∀ x, p x ∧ q x)
 ```
 - **,r** runs the file up to the line the cursor is on, and prints the output
