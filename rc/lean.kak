@@ -24,7 +24,9 @@ replacements = [('∣', r'\mid'), ('≤', r'\le'), ('≥', r'\ge'), ('≡', r'\e
                 ('∃', r'\exists'), ('λ', r'\lambda'), ('Π', r'\Pi'),
                 ('Σ', r'\Sigma'), ('×', r'\times'), ('⊎', r'\union'),
                 ('ℕ', r'\N'), ('ℤ', r'\Z'), ('ℚ', r'\Q'), ('ℝ', r'\R'),
-                ('⟨', r'\<'), ('⟩', r'\>'), ('α', r'\alpha')]
+                ('⟨', r'\<'), ('⟩', r'\>'), ('α', r'\alpha'),
+                ('₀', r'\0'), ('₁', r'\1'), ('₂', r'\2'), ('₃', r'\3'),
+                ('₄', r'\4'), ('₅', r'\5'), ('₆', r'\6'), ('₇', r'\7')]
 
 for line in sys.stdin:
   for unicode, ascii in replacements:
