@@ -133,10 +133,15 @@ provide-module lean %{ evaluate-commands -no-hooks %{
         tmpfile_input=$(mktemp);
         tmpfile_output=$(mktemp);
         echo "$kak_reg_dot" > $tmpfile_input;
-        echo "o/-~<ret>~-/<esc>kl"
         if lean $tmpfile_input >$tmpfile_output 2>/dev/null; then
-          echo "<a-!>cat $tmpfile_output | tail -1<ret>"
+          if [ -s $tmpfile_output ]; then
+            echo "o/-~<ret>~-/<esc>kl"
+            echo "<a-!>cat $tmpfile_output | tail -1<ret>"
+          else
+            echo "<a-;>;<esc>: echo -markup '{green} [ran with no errors]'<ret>"
+          fi
         else
+          echo "o/-~<ret>~-/<esc>kl"
           echo "<a-!>cat $tmpfile_output<ret>"
           echo "<esc>: echo -markup '{red} [error: see log]'<ret>"
         fi
