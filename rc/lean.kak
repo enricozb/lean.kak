@@ -4,8 +4,7 @@
 hook global BufCreate .*[.](lean) %{
   set-option buffer filetype lean
 
-  map buffer normal = \
-    ': lean-unicode-replace %val{cursor_line} %val{cursor_char_column}<ret>' \
+  map buffer normal = ': lean-unicode-replace<ret>' \
     -docstring 'lean unicode replace'
 
   map buffer user r ': lean-line-eval<ret>' \
@@ -30,12 +29,29 @@ replacements = [('∣', r'\mid'), ('≤', r'\le'), ('≥', r'\ge'), ('≡', r'\e
                 ('₀', r'\0'), ('₁', r'\1'), ('₂', r'\2'), ('₃', r'\3'),
                 ('₄', r'\4'), ('₅', r'\5'), ('₆', r'\6'), ('₇', r'\7')]
 
-for line in sys.stdin:
-  for unicode, ascii in replacements:
-    line = line.replace(ascii, unicode)
+content = sys.stdin.read()
 
-  print(line, end='')
-    "
+def replace(content):
+  for unicode, ascii in replacements:
+    content = content.replace(ascii, unicode)
+  return content
+
+s_1 = replace(content)
+s_2 = s_1.replace('/-~kak-lean-saving-cursor~-/', '')
+s_3 = replace(s_2)
+
+# if s_1 != s_3 then a replacement was possible after removing
+# /-~kak-lean-saving-cursor~-/ this means that the cursor is inside a
+# replacement. we find the index of the first difference between the two
+# strings, and add back the /-~kak...~-/ string to s_3
+if s_1 != s_3:
+  diff_i = [(i, c1, c2) for i, (c1, c2) in enumerate(zip(s_1, s_3)) if c1 != c2][0]
+  s_3 = s_3[:diff_i[0]] + '/-~kak-lean-saving-cursor~-/' + s_3[diff_i[0]:]
+  print(s_3, end='')
+
+else:
+  print(s_1, end='')
+"
   }
 }
 
@@ -95,17 +111,11 @@ provide-module lean %{ evaluate-commands -no-hooks %{
     "
   }
 
-  define-command lean-unicode-replace -params 2 %{
+  define-command lean-unicode-replace %{
+    execute-keys 'i/-~kak-lean-saving-cursor~-/<esc>'
     format
-    # return to line and highlight it
-    execute-keys "%arg{1}gx"
-    execute-keys %sh{
-      if [ ${#kak_reg_dot} -lt ${2} ]; then
-        echo ";"
-      else
-        echo ";gh${2}lh"
-      fi
-    }
+    set-register / buffer "/-~kak-lean-saving-cursor~-/"
+    execute-keys nd
   }
 
   # Inline evaluation
@@ -128,7 +138,7 @@ provide-module lean %{ evaluate-commands -no-hooks %{
           echo "<a-!>cat $tmpfile_output | tail -1<ret>"
         else
           echo "<a-!>cat $tmpfile_output<ret>"
-          echo "<esc>: echo -markup '{red} [error]'<ret>"
+          echo "<esc>: echo -markup '{red} [error: see log]'<ret>"
         fi
       }
     }
@@ -143,7 +153,7 @@ provide-module lean %{ evaluate-commands -no-hooks %{
       if lean $tmpfile_input >$tmpfile_output 2>/dev/null; then
         echo "echo '$(cat $tmpfile_output | tail -1)'"
       else
-        echo "echo -markup {red}'lean error'"
+        echo "echo -markup {red}[error: does '''$kak_text''' exist?]"
       fi
     }
   }
