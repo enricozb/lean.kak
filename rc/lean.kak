@@ -85,7 +85,7 @@ provide-module lean %{ evaluate-commands -no-hooks %{
   add-highlighter shared/lean/string region '"'   (?<!\\)(\\\\)*"  fill string
 
   evaluate-commands %sh{
-    operators='≠|<|>|≤|≥|¬|<=|>=|∣|⁻¹|⬝|▸|\+|\*|-|/|\^|&|\||λ|fun|→|×|∃|∀|Π|←|#|@|->|∼|↔|/|=|<->|/\\|\\/|∧|∨|>>=|>>'
+    operators='≠|<|>|≤|≥|¬|<=|>=|∣|⁻¹|⬝|▸|\+|\*|-|/|\^|&|\||λ|fun |→|×|∃|∀|Π|←|#|@|->|∼|↔|/|=|<->|/\\|\\/|∧|∨|>>=|>>'
     types='Type Sort Prop'
     commands='print exit eval check reduce'
     keywords='import prelude protected private noncomputable
