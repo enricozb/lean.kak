@@ -4,7 +4,9 @@
 hook global BufCreate .*[.](lean) %{
   set-option buffer filetype lean
 
-  map buffer normal = ': format<ret>' -docstring 'lean unicode replace'
+  map buffer normal = \
+    ': lean-unicode-replace %val{cursor_line} %val{cursor_char_column}<ret>' \
+    -docstring 'lean unicode replace'
 
   map buffer user r ': lean-line-eval<ret>' \
     -docstring 'run lean code up to current line'
@@ -91,6 +93,19 @@ provide-module lean %{ evaluate-commands -no-hooks %{
         add-highlighter shared/lean/code/ regex '(${operators})' 0:operator
         add-highlighter shared/lean/code/ regex '(:=)' 0:rgb:ff4444
     "
+  }
+
+  define-command lean-unicode-replace -params 2 %{
+    format
+    # return to line and highlight it
+    execute-keys "%arg{1}gx"
+    execute-keys %sh{
+      if [ ${#kak_reg_dot} -lt ${2} ]; then
+        echo ";"
+      else
+        echo ";gh${2}lh"
+      fi
+    }
   }
 
   # Inline evaluation
