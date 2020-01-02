@@ -17,24 +17,23 @@ hook global BufCreate .*[.](lean) %{
     python3 -c "
 import sys
 
-replacements = [('∣', r'\mid'), ('≤', r'\le'), ('≥', r'\ge'), ('≡', r'\equiv'),
-                ('≈', r'\approx'), ('≠', r'\ne'), ('¬', r'\lnot'),
-                ('∧', r'\land'), ('∨', r'\lor'), ('∩', r'\cap'),
-                ('∪', r'\cup'), ('∘', r'\circ'), ('→', r'\to'),
-                ('→', r'\implies'), ('↔', r'\iff'), ('∀', r'\forall'),
-                ('∃', r'\exists'), ('λ', r'\lambda'), ('Π', r'\Pi'),
-                ('Σ', r'\Sigma'), ('×', r'\times'), ('⊎', r'\union'),
-                ('ℕ', r'\N'), ('ℤ', r'\Z'), ('ℚ', r'\Q'), ('ℝ', r'\R'),
-                ('⟨', r'\<'), ('⟩', r'\>'), ('α', r'\alpha'),
-                ('β', r'\beta'), ('γ', r'\gamma'), ('₀', r'\0'),
-                ('₁', r'\1'), ('₂', r'\2'), ('₃', r'\3'), ('₄',
-                r'\4'), ('₅', r'\5'), ('₆', r'\6'), ('₇', r'\7')]
+replacements = [('∣', 'mid'), ('≤', 'le'), ('≥', 'ge'), ('≡', 'equiv'),
+                ('≈', 'approx'), ('≠', 'ne'), ('¬', 'lnot'), ('∧', 'land'),
+                ('∨', 'lor'), ('∩', 'cap'), ('∪', 'cup'), ('∈', 'in'),
+                ('∘', 'circ'), ('→', 'to'), ('→', 'implies'), ('↔', 'iff'),
+                ('∀', 'forall'), ('∃', 'exists'), ('λ', 'lambda'),
+                ('Π', 'Pi'), ('Σ', 'Sigma'), ('×', 'times'), ('⊎', 'union'),
+                ('ℕ', 'N'), ('ℤ', 'Z'), ('ℚ', 'Q'), ('ℝ', 'R'),
+                ('⟨', '<'), ('⟩', '>'), ('α', 'alpha'), ('β', 'beta'),
+                ('γ', 'gamma'), ('₀', '0'), ('₁', '1'), ('₂', '2'),
+                ('₃', '3'), ('₄', '4'), ('₅', '5'), ('₆', '6'), ('₇', '7')]
 
 content = sys.stdin.read()
 
 def replace(content):
   for unicode, ascii in replacements:
-    content = content.replace(ascii, unicode)
+    # this is a '\\' in python, since kak replaces this to a double slash
+    content = content.replace('\\\\' + ascii, unicode)
   return content
 
 s_1 = replace(content)
