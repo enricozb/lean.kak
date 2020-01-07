@@ -11,6 +11,8 @@ hook global BufCreate .*[.](lean) %{
     -docstring 'run lean code up to current line'
   map buffer user c ': prompt "function: " lean-check<ret>' \
     -docstring 'check lean function and show type'
+  map buffer user q ': lean-clear-outputs<ret>' \
+    -docstring 'clear any lean outputs'
 
   # LaTeX / Unicode support
   set-option buffer formatcmd %{
@@ -119,22 +121,34 @@ provide-module lean %{ evaluate-commands -no-hooks %{
     execute-keys nd
   }
 
-  # Inline evaluation
-  define-command lean-line-eval %{
-    # clean up previous invocation
-    evaluate-commands -draft %{
-      try %{
+  define-command lean-clear-outputs %{
+    try %{
+      evaluate-commands -draft %{
         set-register / buffer "\n/-~.*~-/"
         execute-keys nd
       }
     }
-    evaluate-commands -no-hooks %{
-      execute-keys glGk
-      execute-keys %sh{
-        tmpfile_input=$(mktemp);
-        tmpfile_output=$(mktemp);
-        echo "$kak_reg_dot" > $tmpfile_input;
-        if lean $tmpfile_input >$tmpfile_output 2>/dev/null; then
+  }
+
+  # Inline evaluation
+  define-command lean-line-eval %{
+    # clean up previous invocation
+    evaluate-commands -draft %{
+      lean-clear-outputs
+
+      # comment out rest of file & save
+      execute-keys o/-<esc>gjo-/<esc>
+      execute-keys :w<ret>
+    }
+    evaluate-commands -draft -no-hooks %{
+      # clean up commented section without moving cursor
+      execute-keys -draft j<a-x>dgj<a-x>d<ret>
+
+      execute-keys -draft %sh{
+        tmpfile_output=$(mktemp)
+
+        # populate output
+        if lean "$kak_buffile" >$tmpfile_output 2>/dev/null; then
           if [ -s $tmpfile_output ]; then
             echo "o/-~<ret>~-/<esc>kl"
             echo "<a-!>cat $tmpfile_output | tail -1<ret>"
