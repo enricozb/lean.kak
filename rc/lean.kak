@@ -123,7 +123,7 @@ provide-module lean %{ evaluate-commands -no-hooks %{
 
   define-command lean-clear-outputs %{
     try %{
-      evaluate-commands -draft %{
+      evaluate-commands -save-regs '/' -draft %{
         set-register / buffer "\n/-~.*~-/"
         execute-keys nd
       }
@@ -140,11 +140,11 @@ provide-module lean %{ evaluate-commands -no-hooks %{
       execute-keys o/-<esc>gjo-/<esc>
       execute-keys :w<ret>
     }
-    evaluate-commands -draft -no-hooks %{
+    evaluate-commands -no-hooks %{
       # clean up commented section without moving cursor
       execute-keys -draft j<a-x>dgj<a-x>d<ret>
 
-      execute-keys -draft %sh{
+      execute-keys %sh{
         tmpfile_output=$(mktemp)
 
         # populate output
