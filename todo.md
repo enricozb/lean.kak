@@ -1,4 +1,8 @@
 # kak-lean To Do
+- add a few more kind of run commands
+  - run and print all output, even if successful
+  - run whole file regardless of where cursor is
+
 - namespace blocks should autocomplete the name (snippets?) and auto-indent
 
 - screen moves when doing `=` for formatting. fix this
