@@ -47,15 +47,18 @@ define-command lean-lsp-stop %{
 # ------------------------------- hidden options -------------------------------
 
 declare-option \
-  -docstring 'process id of the lean-lsp. empty if lean-lsp is not running.' \
+  -docstring 'process id of the lean-lsp, empty if lean-lsp is not running' \
   str lean_lsp_pid
 
 declare-option \
-  -docstring 'directory of lean-lsp output. empty if lean-lsp is not running.' \
+  -docstring 'directory of lean-lsp output, empty if lean-lsp is not running' \
   str lean_lsp_out_dir
 
 declare-option -docstring 'processing state of lines' \
   line-specs lean_lsp_processing_lines
+
+declare-option -docstring 'diagnostic information to show in the buffers' \
+  range-specs lean_lsp_diagnostics
 
 
 # ------------------------------ hidden commands -------------------------------
@@ -67,7 +70,7 @@ define-command -hidden lean-lsp -params .. %{
 define-command -hidden lean-lsp-process-notifications %{
   nop %sh{
     (
-      # required env vars: $kak_session $kak_opt_lean_lsp_project_dir
+      # required env vars: $kak_session
       nu --commands '
         lean-lsp notifications
         | lines
@@ -91,6 +94,40 @@ define-command -hidden lean-lsp-process-notifications %{
                   set-option buffer lean_lsp_processing_lines %val{timestamp} ($line_specs)
                 " | kak -p $env.kak_session
             }
+
+            "textDocument/publishDiagnostics" => {
+              let file = ($notification.params.uri | url parse).path
+
+              let diagnostics = $notification.params.diagnostics
+                | each {|diagnostic|
+                  let range = $diagnostic.range
+                  let start = $"($range.start.line + 1).($range.start.character + 1)"
+                  let end = if $range.end.character == 0 {
+                    $"($range.end.line).9999"
+                  } else {
+                    $"($range.end.line + 1).($range.end.character)"
+                  }
+
+                  let face = match $diagnostic.severity {
+                    # error
+                    1 => ",,red+c"
+                    # warning
+                    2 => ",,yellow+c"
+                    # information
+                    3 => ",,cyan+c"
+                    # hint
+                    4 => ",,magenta+c"
+                  }
+
+                  $"($start),($end)|($face)"
+                }
+                | str join " "
+
+              $"
+                edit -existing %{($file)}
+                set-option buffer lean_lsp_diagnostics %val{timestamp} ($diagnostics)
+              " | kak -p $env.kak_session
+            }
           }
         }
       '
@@ -99,9 +136,10 @@ define-command -hidden lean-lsp-process-notifications %{
 }
 
 define-command -hidden lean-lsp-buffer-highlighters %{
-  add-highlighter buffer/lean-lsp group -passes move
+  add-highlighter buffer/lean-lsp group -passes colorize|move
 
   add-highlighter buffer/lean-lsp/processing flag-lines yellow lean_lsp_processing_lines
+  add-highlighter buffer/lean-lsp/diagnostics ranges lean_lsp_diagnostics
 }
 
 define-command -hidden lean-lsp-buffer-hooks %{
