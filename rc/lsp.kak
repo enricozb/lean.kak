@@ -1,3 +1,9 @@
+# ---------------------------------- mappings ----------------------------------
+
+declare-user-mode lean
+
+map global lean h -docstring 'hover' ': lean-lsp-hover<ret>'
+
 # ---------------------------------- commands ----------------------------------
 
 define-command lean-lsp-start %{
@@ -57,14 +63,50 @@ declare-option \
 declare-option -docstring 'processing state of lines' \
   line-specs lean_lsp_processing_lines
 
-declare-option -docstring 'diagnostic information to show in the buffers' \
-  range-specs lean_lsp_diagnostics
+declare-option -docstring 'diagnostic highlighter range-specs' \
+  range-specs lean_lsp_diagnostics_range_specs
+
+declare-option -docstring 'latest diagnostic json notification' \
+  str lean_lsp_diagnostics_json
 
 
 # ------------------------------ hidden commands -------------------------------
 
 define-command -hidden lean-lsp -params .. %{
   nop %sh{ lean-lsp "$@" }
+}
+
+define-command -hidden lean-lsp-hover %{
+  evaluate-commands %sh{
+    # required env vars:
+    #   $kak_buffile $kak_cursor_line $kak_cursor_column $kak_cursor_char_column
+    #   $kak_opt_lean_lsp_diagnostics_json
+    nu -c '
+      let file = $env.kak_buffile
+      let line = ($env.kak_cursor_line | into int) - 1
+      let character = ($env.kak_cursor_char_column | into int) - 1
+      let hover = lean-lsp file hover $file --line $line --character $character | from json
+      let diagnostics = $env.kak_opt_lean_lsp_diagnostics_json
+        | from json
+        | filter { |diagnostic|
+          let range = $diagnostic.range
+          let start = $range.start
+          let end = $range.end
+          (
+            ($line > $start.line or ($line == $start.line and $character >= $start.character))
+            and
+            ($line < $end.line or ($line == $end.line and $character < $end.character))
+          )
+        }
+        | get message
+        | str join "\n\n-----\n\n"
+
+      let anchor = $"($env.kak_cursor_line).($env.kak_cursor_column)"
+      let contents = $"# Diagnostics\n\n($diagnostics)\n\n# Hover\n\n($hover.result.contents.value)"
+
+  $"info -anchor ($anchor) -style below %{($contents)}"
+    '
+  }
 }
 
 define-command -hidden lean-lsp-process-notifications %{
@@ -74,7 +116,7 @@ define-command -hidden lean-lsp-process-notifications %{
       nu --commands '
         lean-lsp notifications
         | lines
-        | each {|line|
+        | each { |line|
           let notification = $line | from json
 
           match $notification.method {
@@ -82,9 +124,9 @@ define-command -hidden lean-lsp-process-notifications %{
               let file = ($notification.params.textDocument.uri | url parse).path
 
               let line_specs = $notification.params.processing
-                | each {|block|
+                | each { |block|
                   let range = $block.range.start.line..$block.range.end.line
-                  $range | each {|line| $"($line)|│"}
+                  $range | each { |line| $"($line)|│" }
                 }
                 | flatten
                 | str join " "
@@ -98,8 +140,9 @@ define-command -hidden lean-lsp-process-notifications %{
             "textDocument/publishDiagnostics" => {
               let file = ($notification.params.uri | url parse).path
 
-              let diagnostics = $notification.params.diagnostics
-                | each {|diagnostic|
+              let diagnostics_json = $notification.params.diagnostics | to json
+              let diagnostics_range_specs = $notification.params.diagnostics
+                | each { |diagnostic|
                   let range = $diagnostic.range
                   let start = $"($range.start.line + 1).($range.start.character + 1)"
                   let end = if $range.end.character == 0 {
@@ -125,7 +168,8 @@ define-command -hidden lean-lsp-process-notifications %{
 
               $"
                 edit -existing %{($file)}
-                set-option buffer lean_lsp_diagnostics %val{timestamp} ($diagnostics)
+                set-option buffer lean_lsp_diagnostics_json %{($diagnostics_json)}
+                set-option buffer lean_lsp_diagnostics_range_specs %val{timestamp} ($diagnostics_range_specs)
               " | kak -p $env.kak_session
             }
           }
@@ -135,11 +179,15 @@ define-command -hidden lean-lsp-process-notifications %{
   }
 }
 
+define-command -hidden lean-lsp-buffer-mappings %{
+  map buffer normal <c-l> ': enter-user-mode lean<ret>'
+}
+
 define-command -hidden lean-lsp-buffer-highlighters %{
   add-highlighter buffer/lean-lsp group -passes colorize|move
 
   add-highlighter buffer/lean-lsp/processing flag-lines yellow lean_lsp_processing_lines
-  add-highlighter buffer/lean-lsp/diagnostics ranges lean_lsp_diagnostics
+  add-highlighter buffer/lean-lsp/diagnostics ranges lean_lsp_diagnostics_range_specs
 }
 
 define-command -hidden lean-lsp-buffer-hooks %{
@@ -162,6 +210,7 @@ define-command -hidden lean-lsp-global-hooks %{
 
     lean-lsp-buffer-hooks
     lean-lsp-buffer-highlighters
+    lean-lsp-buffer-mappings
   }
 
   hook -always -group lean-lsp global BufNewFile .*\.lean %{
@@ -169,6 +218,7 @@ define-command -hidden lean-lsp-global-hooks %{
 
     lean-lsp-buffer-hooks
     lean-lsp-buffer-highlighters
+    lean-lsp-buffer-mappings
   }
 
   hook -once -always -group lean-lsp global KakEnd .* lean-lsp-stop
