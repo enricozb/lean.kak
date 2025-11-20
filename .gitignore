@@ -1,0 +1,6 @@
+# rust
+/target/
+
+# direnv
+/.envrc
+/.direnv/
