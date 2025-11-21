@@ -12,4 +12,9 @@ pub enum Error {
   Write(std::io::Error),
   #[error("kak -p process did not exit successfully: {0}")]
   Wait(std::io::Error),
+
+  #[error("kakoune logging was already initialized")]
+  LoggingAlreadyInitialized,
+  #[error("kakoune logging was not initialized")]
+  LoggingUninitialized,
 }
