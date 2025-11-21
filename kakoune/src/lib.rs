@@ -38,6 +38,7 @@ impl Kakoune {
       stdin.write_all(b"\n").await.map_err(Error::Write)?;
     }
 
+    drop(stdin);
     child.wait().await.map_err(Error::Wait)?;
 
     Ok(())

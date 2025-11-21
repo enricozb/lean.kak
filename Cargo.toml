@@ -1,15 +1,18 @@
 [workspace]
 resolver = "3"
 
-members = ["kakoune"]
+members = ["kak-lean","kakoune"]
 
 [workspace.package]
 edition = "2024"
 
 [workspace.dependencies]
-derive_more = { version = "2.0.1", features = ["constructor", "deref", "display"] }
+derive_more = "2.0.1"
+indoc = "2.0.7"
 thiserror = "2.0.17"
-tokio = { version = "1.48.0", features = ["io-util", "process"] }
+tokio = "1.48.0"
+
+kakoune = { path = "kakoune" }
 
 [workspace.lints.clippy]
 pedantic = { level = "deny" }

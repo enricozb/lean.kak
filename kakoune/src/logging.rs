@@ -85,9 +85,9 @@ pub async fn init<S: Display>(session: String, level: Level, module: S) -> Resul
 ///
 /// This function will return an error if commands could not be sent to
 /// kakoune for some reason.
-pub async fn log<S: Display>(level: Level, message: &str) -> Result<()> {
+pub async fn log<S: Into<EscapedString>>(level: Level, message: S) -> Result<()> {
   let logger = KAKOUNE_LOGGER.get().ok_or(Error::LoggingUninitialized)?;
-  let message = EscapedString::from(message);
+  let message = message.into();
 
   logger.log(level, &message).await
 }

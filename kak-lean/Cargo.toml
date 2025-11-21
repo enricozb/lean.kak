@@ -1,0 +1,12 @@
+[package]
+name = "kak-lean"
+version = "0.1.0"
+edition.workspace = true
+
+[dependencies]
+tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
+
+kakoune.workspace = true
+
+[lints]
+workspace = true
