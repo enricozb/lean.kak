@@ -67,11 +67,11 @@ pub async fn init<S: Display>(session: String, level: Level, module: S) -> Resul
     return Err(Error::LoggingAlreadyInitialized);
   }
 
-  let kakoune = Kakoune::new(session);
+  let kakoune = Kakoune::new(session).await?;
   let module = EscapedString::from(format!("({module})"));
   let logger = Logger::new(kakoune, level, module);
 
-  logger.kakoune.init().await?;
+  // logger.kakoune.init().await?;
   KAKOUNE_LOGGER.get_or_init(|| logger);
 
   Ok(())

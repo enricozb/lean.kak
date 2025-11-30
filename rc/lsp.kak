@@ -24,7 +24,7 @@ define-command lean-lsp-start %{
 
     (
       # TODO(enricozb): this needs to inform kak if it ever exits
-      lean-lsp serve >"$lean_lsp_out_dir/out" 2>"$lean_lsp_out_dir/err"
+      /home/enricozb/projects/personal/lean-lsp/target/release/lean-lsp serve >"$lean_lsp_out_dir/out" 2>"$lean_lsp_out_dir/err"
     ) &
     lean_lsp_pid=$!
 
@@ -79,7 +79,7 @@ declare-option -docstring 'latest diagnostic json notification' \
 # ------------------------------ hidden commands -------------------------------
 
 define-command -hidden lean-lsp -params .. %{
-  nop %sh{ lean-lsp "$@" }
+  nop %sh{ /home/enricozb/projects/personal/lean-lsp/target/release/lean-lsp "$@" }
 }
 
 define-command -hidden lean-lsp-hover %{

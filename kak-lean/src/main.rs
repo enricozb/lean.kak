@@ -1,14 +1,28 @@
-use kakoune::logging::Level;
+use clap::Parser;
+use kakoune::{args::KakouneArgs, error::Result};
+
+#[derive(Parser)]
+struct Args {
+  #[command(flatten)]
+  kakoune: KakouneArgs,
+}
 
 #[tokio::main]
-async fn main() {
-  let session = String::from("207050");
+async fn main() -> Result<()> {
+  let args = Args::parse();
+  let kakoune = args
+    .kakoune
+    .connect()
+    .await?
+    .with_tracing("lean.kak")
+    .await?
+    .into_session();
 
-  kakoune::init_logging!(session, Level::Trace, "testing");
+  tracing::trace!("testing a trace message");
+  tracing::debug!("testing a debug message");
+  tracing::info!("testing a info message");
+  tracing::warn!("testing a warn message");
+  tracing::error!("testing a error message");
 
-  kakoune::trace!("hello, world!");
-  kakoune::debug!("hello, world!");
-  kakoune::info!("hello, world!");
-  kakoune::warn!("hello, world!");
-  kakoune::error!("hello, world!");
+  Ok(())
 }

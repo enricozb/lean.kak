@@ -4,10 +4,15 @@ version = "0.1.0"
 edition.workspace = true
 
 [dependencies]
+clap = { workspace = true, features = ["derive"] }
 derive_more = { workspace = true, features = ["constructor", "deref", "display"] }
 indoc.workspace = true
+nix = { workspace = true, features = ["fs"] }
+tempfile.workspace = true
 thiserror.workspace = true
-tokio = { workspace = true, features = ["io-util", "process"] }
+tokio = { workspace = true, features = ["fs", "io-util", "net", "process"] }
+tracing.workspace = true
+tracing-subscriber = { workspace = true, features = ["json"] }
 
 [lints]
 workspace = true
