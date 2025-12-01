@@ -56,9 +56,6 @@ impl TracingInitializer<'_> {
     self.run_init_kakoune_rs_logging_kakscript().await?;
 
     let tracing_level = self.tracing_level().await?;
-
-    println!("using tracing-level:{tracing_level}");
-
     let log_tempdir = self.log_tempdir().await?;
     let kakoune_rs_logpath = log_tempdir.join(module);
     let kakoune_rs_logfile = File::options()
