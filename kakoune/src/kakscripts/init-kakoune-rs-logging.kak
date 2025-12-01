@@ -23,6 +23,7 @@ try %{
   }
 
   # global vars
+  declare-option str kakoune_rs_log_level 'warn'
   declare-option -hidden str-list kakoune_rs_log_modules
 
   # local vars

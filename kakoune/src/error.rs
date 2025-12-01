@@ -15,6 +15,9 @@ pub enum Error {
   #[error("kak -p process did not exit successfully: {0}")]
   Wait(std::io::Error),
 
+  #[error("failed to parse log level from str: {0}")]
+  LevelFromStr(tracing::metadata::ParseLevelError),
+
   #[error("failed to create temporary directory: {0}")]
   TempDir(std::io::Error),
 

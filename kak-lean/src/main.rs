@@ -10,13 +10,7 @@ struct Args {
 #[tokio::main]
 async fn main() -> Result<()> {
   let args = Args::parse();
-  let kakoune = args
-    .kakoune
-    .connect()
-    .await?
-    .with_tracing("lean.kak")
-    .await?
-    .into_session();
+  let kakoune = args.kakoune.into_session_with_tracing("lean.kak").await?;
 
   tracing::trace!("testing a trace message");
   tracing::debug!("testing a debug message");

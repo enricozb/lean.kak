@@ -2,8 +2,7 @@ pub mod args;
 pub mod error;
 mod escape;
 mod kakscripts;
-pub mod logging;
-mod macros;
+mod tracing;
 
 use std::fmt::Display;
 
@@ -20,12 +19,14 @@ use crate::{
   escape::EscapedString,
 };
 
+/// A running kakoune session.
 pub struct Kakoune {
   session: String,
 }
 
 impl Kakoune {
-  /// Returns a new kakoune instance.
+  /// Returns a new kakoune instance and checks that `session` is an existing
+  /// kakoune session.
   ///
   /// # Errors
   ///
@@ -44,6 +45,7 @@ impl Kakoune {
     Self { session }
   }
 
+  #[must_use]
   pub fn session(&self) -> &str {
     &self.session
   }
@@ -132,13 +134,13 @@ impl Kakoune {
     let tempdir = TempDir::new().map_err(Error::TempDir)?;
     let fifo_receiver_path = tempdir.path().join(FIFO_RECEIVER_FILENAME);
     let fifo_receiver_str = EscapedString::from(fifo_receiver_path.display().to_string());
-    let command = format!(
+    let command = indoc::formatdoc! {
       "try %{{
-      echo -to-file {fifo_receiver_str} {expansion}
-    }} catch %{{
-      echo -to-file {fifo_receiver_str} ''
-    }}"
-    );
+        echo -to-file {fifo_receiver_str} {expansion}
+      }} catch %{{
+        echo -to-file {fifo_receiver_str} ''
+      }}"
+    };
 
     nix::unistd::mkfifo(&fifo_receiver_path, Mode::S_IRWXU).map_err(Error::CreateFifo)?;
     let mut reader = OpenOptions::new()
