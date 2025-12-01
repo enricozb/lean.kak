@@ -14,7 +14,7 @@ use crate::{
   error::{Error, Result},
 };
 
-/// Arguments related to kakoune-rs tracing support.
+/// Arguments related to kakoune-rs logging/tracing support.
 #[derive(Args)]
 pub struct TracingArgs {
   /// The maximum level to capture tracing logs for.
@@ -29,8 +29,11 @@ pub struct TracingArgs {
   /// This must match the value of the global option `%opt{KAKOUNE_RS_TEMPDIR}`
   /// in the kakoune session. If the provided value is an empty string, it is
   /// considered equivalent to not providing a value at all.
+  ///
+  /// When calling this CLI from within kakoune, this argument should always
+  /// be provided to avoid a re-request for it from the kakoune session.
   #[arg(long)]
-  kakoune_rs_tempdir: Option<PathBuf>,
+  log_tempdir: Option<PathBuf>,
 }
 
 impl TracingArgs {
@@ -56,8 +59,8 @@ impl TracingInitializer<'_> {
 
     println!("using tracing-level:{tracing_level}");
 
-    let kakoune_rs_tempdir = self.kakoune_rs_tempdir().await?;
-    let kakoune_rs_logpath = kakoune_rs_tempdir.join(module);
+    let log_tempdir = self.log_tempdir().await?;
+    let kakoune_rs_logpath = log_tempdir.join(module);
     let kakoune_rs_logfile = File::options()
       .create(true)
       .append(true)
@@ -97,19 +100,19 @@ impl TracingInitializer<'_> {
 
   /// Returns the temporary directory storing kakoune-rs logs.
   ///
-  /// If it was not provided via [`kakoune_rs_tempdir`], it will be retrieved
+  /// If it was not provided via [`log_tempdir`], it will be retrieved
   /// from the kakoune session. In this case,
   /// [`Self::run_init_kakoune_rs_logging_kakscript`] must have been called
   /// before this function was called.
-  async fn kakoune_rs_tempdir(&self) -> Result<Cow<'_, Path>> {
-    if let Some(kakoune_rs_tempdir) = &self.tracing_args.kakoune_rs_tempdir
-      && kakoune_rs_tempdir != ""
+  async fn log_tempdir(&self) -> Result<Cow<'_, Path>> {
+    if let Some(log_tempdir) = &self.tracing_args.log_tempdir
+      && log_tempdir != ""
     {
-      Ok(Cow::Borrowed(kakoune_rs_tempdir))
+      Ok(Cow::Borrowed(log_tempdir))
     } else {
-      let kakoune_rs_tempdir = self.kakoune.get_option(Self::KAKOUNE_RS_TEMPDIR_OPTION).await?;
+      let log_tempdir = self.kakoune.get_option(Self::KAKOUNE_RS_TEMPDIR_OPTION).await?;
 
-      Ok(Cow::Owned(PathBuf::from(kakoune_rs_tempdir)))
+      Ok(Cow::Owned(PathBuf::from(log_tempdir)))
     }
   }
 
